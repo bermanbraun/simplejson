@@ -354,6 +354,33 @@ def dumps(obj, skipkeys=False, ensure_ascii=True, check_circular=True,
         return _default_encoder.encode(obj)
     if cls is None:
         cls = JSONEncoder
+    #
+    # luis.20140123 begin {{{
+    # Django 1.5+ is incompatible with "simplejson". There are a handful of keyword arguments
+    # that are not supported in the JSONEncoder constructor that the
+    # django.core.serializers.json.DjangoJSONEncoder derives from.
+    # We need to break the Django 1.5+ / haystack / simplejson imcompatibility.
+    # Let's not pass named arguments that DjangoJSONEncoder does not understand, and 
+    # pass them all to haystack/pyelasticsearch.
+    # Disabled keyword arguments are purposedely just commented out to keep them as a reference.
+    #
+    if cls.__module__ == 'django.core.serializers.json' and cls.__name__ == 'DjangoJSONEncoder':
+        return cls(
+            skipkeys=skipkeys, ensure_ascii=ensure_ascii,
+            check_circular=check_circular, allow_nan=allow_nan, indent=indent,
+            separators=separators, encoding=encoding, default=default,
+            #use_decimal=use_decimal,
+            #namedtuple_as_object=namedtuple_as_object,
+            #tuple_as_array=tuple_as_array,
+            #bigint_as_string=bigint_as_string,
+            sort_keys=sort_keys,
+            #item_sort_key=item_sort_key,
+            #for_json=for_json,
+            #ignore_nan=ignore_nan,
+            **kw).encode(obj)
+    #
+    # luis.20140123 end }}}
+    #
     return cls(
         skipkeys=skipkeys, ensure_ascii=ensure_ascii,
         check_circular=check_circular, allow_nan=allow_nan, indent=indent,
